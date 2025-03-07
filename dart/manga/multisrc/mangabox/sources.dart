@@ -2,11 +2,12 @@ import '../../../../model/source.dart';
 import 'src/mangabat/mangabat.dart';
 import 'src/mangairo/mangaeiro.dart';
 import 'src/mangakakalot/mangakakalot.dart';
+import 'src/mangakakalotgg/mangakakalotgg.dart';
 import 'src/manganato/manganato.dart';
 
-const mangaboxVersion = "0.0.6";
+const mangaboxVersion = "0.0.7";
 const mangaboxSourceCodeUrl =
-    "https://raw.githubusercontent.com/kodjodevf/mangayomi-extensions/$branchName/dart/manga/multisrc/mangabox/mangabox.dart";
+    "https://raw.githubusercontent.com/Schnitzel5/mangayomi-extensions/$branchName/dart/manga/multisrc/mangabox/mangabox.dart";
 
 List<Source> get mangaboxSourcesList => _mangaboxSourcesList;
 List<Source> _mangaboxSourcesList =
@@ -17,6 +18,8 @@ List<Source> _mangaboxSourcesList =
           mangairoSource,
           //Mangakakalot (EN)
           mangakakalotSource,
+          //Mangakakalot.gg (EN)
+          mangakakalotggSource,
           //Manganato (EN)
           manganatoSource,
         ]
