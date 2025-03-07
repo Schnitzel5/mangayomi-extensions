@@ -143,7 +143,7 @@ class MangaBox extends MProvider {
       {"Ongoing": 0, "Completed": 1},
     ];
     MManga manga = MManga();
-    final res = (await client.get(Uri.parse(url))).body;
+    final res = (await client.get(Uri.parse(source.baseUrl + "/" + url))).body;
     final document = parseHtml(res);
     manga.author =
         document.xpathFirst(
@@ -243,16 +243,16 @@ class MangaBox extends MProvider {
     List<String> urls = [];
     urls = xpath(
       res,
-      '//*[ @class^="genres-item"  or @class="list-truyen-item-wrap" or @class="story-item"]/h3/a/@href',
+      '//*[ @class^="genres-item"  or @class="list-truyen-item-wrap" or @class="story-item" or @class="item-info"]/h3/a/@href',
     );
     List<String> names = [];
     names = xpath(
       res,
-      '//*[ @class^="genres-item"  or @class="list-truyen-item-wrap" or @class="story-item"]/h3/a/text()',
+      '//*[ @class^="genres-item"  or @class="list-truyen-item-wrap" or @class="story-item" or @class="item-info"]/h3/a/text()',
     );
     final images = xpath(
       res,
-      '//*[ @class="content-genres-item"  or @class="list-story-item" or @class="story-item" or @class="list-truyen-item-wrap"]/a/img/@src',
+      '//*[ @class="content-genres-item"  or @class="list-story-item" or @class="story-item" or @class="list-truyen-item-wrap" or @class="item-poster"]/a/img/@src',
     );
     if (names.isEmpty) {
       names = xpath(res, '//*[@class="list-story-item"]/a/@title');
@@ -279,7 +279,7 @@ class MangaBox extends MProvider {
     } else if (sourceName == "Mangakakalot.gg") {
       return "manga-list/hot-manga?page=$page";
     }
-    return "manga_list?type=topview&category=all&state=all&page=$page";
+    return "hot?type=topview&category=all&state=all&page=$page";
   }
 
   String latestUrlPath(String sourceName, int page) {
@@ -292,7 +292,7 @@ class MangaBox extends MProvider {
     } else if (sourceName == "Mangakakalot.gg") {
       return "manga-list/latest-manga?page=$page";
     }
-    return "manga_list?type=latest&category=all&state=all&page=$page";
+    return "latest?type=latest&category=all&state=all&page=$page";
   }
 
   String simpleQueryPath(String sourceName, int page, String query) {
