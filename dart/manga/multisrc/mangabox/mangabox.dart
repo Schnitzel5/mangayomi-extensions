@@ -276,6 +276,8 @@ class MangaBox extends MProvider {
       return "manga-list-all/$page?type=topview";
     } else if (sourceName == "Mangairo") {
       return "manga-list/type-topview/ctg-all/state-all/page-$page";
+    } else if (sourceName == "Mangakakalot.gg") {
+      return "manga-list/hot-manga?page=$page";
     }
     return "manga_list?type=topview&category=all&state=all&page=$page";
   }
@@ -287,12 +289,14 @@ class MangaBox extends MProvider {
       return "manga-list-all/$page";
     } else if (sourceName == "Mangairo") {
       return "manga-list/type-latest/ctg-all/state-all/page-$page";
+    } else if (sourceName == "Mangakakalot.gg") {
+      return "manga-list/latest-manga?page=$page";
     }
     return "manga_list?type=latest&category=all&state=all&page=$page";
   }
 
   String simpleQueryPath(String sourceName, int page, String query) {
-    if (sourceName == "Mangakakalot") {
+    if (sourceName == "Mangakakalot" || sourceName == "Mangakakalot.gg") {
       return "search/story/${normalizeSearchQuery(query)}?page=$page";
     } else if (sourceName == "Mangairo") {
       return "list/search/${normalizeSearchQuery(query)}?page=$page";
