@@ -40,31 +40,34 @@ class DefaultExtension extends MProvider {
     }
 
     getImageUrl(id) { return `https://temp.compsci88.com/cover/normal/${id}.webp`; }
-
+    
     async search(query, page, filters) {
-        var offset = 32 * (parseInt(page) - 1)
-        var sort = filters[0].values[filters[0].state].value
-        var order = filters[1].values[filters[1].state].value
-        var translation = filters[2].values[filters[2].state].value
-        var status = ""
-        for (var filter of filters[3].state) {
-            if (filter.state == true)
-                status += `&included_status=${filter.value}`
+        var offset = 32 * (parseInt(page) - 1);
+        var slug = `/search/data?limit=32&offset=${offset}&author=&text=${query}&display_mode=Full%20Display`;
+        if (filters && filters.length > 0) {
+            var sort = filters[0].values[filters[0].state].value;
+            var order = filters[1].values[filters[1].state].value;
+            var translation = filters[2].values[filters[2].state].value;
+            var status = "";
+            for (var filter of filters[3].state) {
+                if (filter.state == true)
+                    status += `&included_status=${filter.value}`;
+            }
+            var type = ""
+            for (var filter of filters[4].state) {
+                if (filter.state == true)
+                    type += `&included_type=${filter.value}`;
+            }
+            var tags = ""
+            for (var filter of filters[5].state) {
+                if (filter.state == true)
+                    tags += `&included_tag=${filter.value}`;
+            }
+            slug += `&sort=${sort}&order=${order}&official=${translation}${status}${type}${tags}`;
         }
-        var type = ""
-        for (var filter of filters[4].state) {
-            if (filter.state == true)
-                type += `&included_type=${filter.value}`
-        }
-        var tags = ""
-        for (var filter of filters[5].state) {
-            if (filter.state == true)
-                tags += `&included_tag=${filter.value}`
-        }
-        var slug = `/search/data?limit=32&offset=${offset}&author=&text=${query}&sort=${sort}&order=${order}&official=${translation}${status}${type}${tags}&display_mode=Full%20Display`
         var doc = await this.request(slug);
         var list = [];
-        var mangaElements = doc.select("article:has(section)")
+        var mangaElements = doc.select("article:has(section)");
         for (var manga of mangaElements) {
             var imageUrl = manga.selectFirst("img").getSrc;
             var details = manga.selectFirst("section > a");
@@ -74,7 +77,7 @@ class DefaultExtension extends MProvider {
         }
 
         var hasNextPage = doc.selectFirst("button").text.length > 0;
-        return { list, hasNextPage }
+        return { list, hasNextPage };
 
     }
     statusCode(status) {
