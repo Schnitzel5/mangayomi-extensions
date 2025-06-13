@@ -10,20 +10,18 @@ class ZoroTheme extends MProvider {
 
   @override
   Future<MPages> getPopular(int page) async {
-    final res =
-        (await client.get(
-          Uri.parse("${source.baseUrl}/most-popular?page=$page"),
-        )).body;
+    final res = (await client.get(
+      Uri.parse("${source.baseUrl}/most-popular?page=$page"),
+    )).body;
 
     return animeElementM(res);
   }
 
   @override
   Future<MPages> getLatestUpdates(int page) async {
-    final res =
-        (await client.get(
-          Uri.parse("${source.baseUrl}/recently-updated?page=$page"),
-        )).body;
+    final res = (await client.get(
+      Uri.parse("${source.baseUrl}/recently-updated?page=$page"),
+    )).body;
 
     return animeElementM(res);
   }
@@ -161,8 +159,10 @@ class ZoroTheme extends MProvider {
     final urlEp =
         "${source.baseUrl}/ajax${ajaxRoute('${source.baseUrl}')}/episode/list/$id";
 
-    final resEp =
-        (await client.get(Uri.parse(urlEp), headers: {"referer": url})).body;
+    final resEp = (await client.get(
+      Uri.parse(urlEp),
+      headers: {"referer": url},
+    )).body;
 
     final html = json.decode(resEp)["html"];
     final epElements = parseHtml(html).select("a.ep-item");
@@ -187,13 +187,12 @@ class ZoroTheme extends MProvider {
   Future<List<MVideo>> getVideoList(String url) async {
     final id = substringAfterLast(url, '?ep=');
 
-    final res =
-        (await client.get(
-          Uri.parse(
-            "${source.baseUrl}/ajax${ajaxRoute('${source.baseUrl}')}/episode/servers?episodeId=$id",
-          ),
-          headers: {"referer": "${source.baseUrl}/$url"},
-        )).body;
+    final res = (await client.get(
+      Uri.parse(
+        "${source.baseUrl}/ajax${ajaxRoute('${source.baseUrl}')}/episode/servers?episodeId=$id",
+      ),
+      headers: {"referer": "${source.baseUrl}/$url"},
+    )).body;
     final html = json.decode(res)["html"];
 
     final serverElements = parseHtml(html).select("div.server-item");
@@ -206,13 +205,12 @@ class ZoroTheme extends MProvider {
       final id = serverElement.attr("data-id");
       final subDub = serverElement.attr("data-type");
 
-      final resE =
-          (await client.get(
-            Uri.parse(
-              "${source.baseUrl}/ajax${ajaxRoute('${source.baseUrl}')}/episode/sources?id=$id",
-            ),
-            headers: {"referer": "${source.baseUrl}/$url"},
-          )).body;
+      final resE = (await client.get(
+        Uri.parse(
+          "${source.baseUrl}/ajax${ajaxRoute('${source.baseUrl}')}/episode/sources?id=$id",
+        ),
+        headers: {"referer": "${source.baseUrl}/$url"},
+      )).body;
       String epUrl = substringBefore(substringAfter(resE, "\"link\":\""), "\"");
       List<MVideo> a = [];
       if (hosterSelection.contains(name) && typeSelection.contains(subDub)) {
@@ -234,12 +232,15 @@ class ZoroTheme extends MProvider {
   }
 
   Future<List<MVideo>> rapidCloudExtractor(String url, String name) async {
-    final headers = {'Referer': 'https://megacloud.club/'};
+    final headers = {
+      'Referer': 'https://megacloud.club/',
+      'Origin': 'https://megacloud.club/',
+    };
     final serverUrl = ['https://megacloud.tv', 'https://rapid-cloud.co'];
 
     final serverType = RegExp(r'https://megacloud\..*').hasMatch(url) ? 0 : 1;
     final sourceUrl = [
-      '/embed-2/ajax/e-1/getSources?id=',
+      '/embed-2/v2/e-1/getSources?id=',
       '/ajax/embed-6-v2/getSources?id=',
     ];
     final sourceSpliter = ['/e-1/', '/embed-6-v2/'];
@@ -247,7 +248,11 @@ class ZoroTheme extends MProvider {
 
     String resServer = "";
     if (serverType == 0) {
-      resServer = await evaluateJavascriptViaWebview(
+      resServer = (await client.get(
+        Uri.parse('${serverUrl[serverType]}${sourceUrl[serverType]}$id'),
+        headers: {"Referer": url},
+      )).body;
+      /*resServer = await evaluateJavascriptViaWebview(
         "https://megacloud.tv/about",
         {"X-Requested-With": "org.lineageos.jelly"},
         [
@@ -256,13 +261,12 @@ class ZoroTheme extends MProvider {
           getSrcStr,
           "getSources('$id').then(s => window.flutter_inappwebview.callHandler('setResponse', JSON.stringify(s)))",
         ],
-      );
+      );*/
     } else {
-      resServer =
-          (await client.get(
-            Uri.parse('${serverUrl[serverType]}${sourceUrl[serverType]}$id'),
-            headers: {"X-Requested-With": "XMLHttpRequest"},
-          )).body;
+      resServer = (await client.get(
+        Uri.parse('${serverUrl[serverType]}${sourceUrl[serverType]}$id'),
+        headers: {"X-Requested-With": "XMLHttpRequest"},
+      )).body;
     }
 
     final encrypted = getMapValue(resServer, "encrypted");
@@ -270,6 +274,10 @@ class ZoroTheme extends MProvider {
     List<MVideo> videos = [];
     if (encrypted == "true") {
       final ciphered = getMapValue(resServer, "sources");
+      print("DEBUG SALTED:");
+      print(utf8.encode("Salted__").join(","));
+      print("DEBUG CIPHERED");
+      print(base64.decode(ciphered).sublist(8, 16).join(","));
       List<List<int>> indexPairs = await generateIndexPairs(serverType);
       var password = '';
       String ciphertext = ciphered;
@@ -292,14 +300,12 @@ class ZoroTheme extends MProvider {
     String masterUrl =
         ((json.decode(videoResJson) as List<Map<String, dynamic>>)
             .first)['file'];
-    String type =
-        ((json.decode(videoResJson) as List<Map<String, dynamic>>)
-            .first)['type'];
+    String type = ((json.decode(videoResJson) as List<Map<String, dynamic>>)
+        .first)['type'];
 
-    final tracks =
-        (json.decode(resServer)['tracks'] as List)
-            .where((e) => e['kind'] == 'captions' ? true : false)
-            .toList();
+    final tracks = (json.decode(resServer)['tracks'] as List)
+        .where((e) => e['kind'] == 'captions' ? true : false)
+        .toList();
     List<MTrack> subtitles = [];
 
     for (var sub in tracks) {
@@ -313,8 +319,10 @@ class ZoroTheme extends MProvider {
     }
 
     if (type == "hls") {
-      final masterPlaylistRes =
-          (await client.get(Uri.parse(masterUrl), headers: headers)).body;
+      final masterPlaylistRes = (await client.get(
+        Uri.parse(masterUrl),
+        headers: headers,
+      )).body;
 
       for (var it in substringAfter(
         masterPlaylistRes,
@@ -353,32 +361,46 @@ class ZoroTheme extends MProvider {
   }
 
   Future<List<List<int>>> generateIndexPairs(int serverType) async {
-    final jsPlayerUrl = [
-      "https://megacloud.tv/js/player/a/prod/e1-player.min.js",
-      "https://rapid-cloud.co/js/player/prod/e6-player-v2.min.js",
-    ];
-    final scriptText =
-        (await client.get(Uri.parse(jsPlayerUrl[serverType]))).body;
-
-    final switchCode = scriptText.substring(
-      scriptText.lastIndexOf('switch'),
-      scriptText.indexOf('=partKey'),
-    );
-
     List<int> indexes = [];
-    for (var variableMatch
-        in RegExp(r'=(\w+)').allMatches(switchCode).toList()) {
-      final regex = RegExp(
-        ',${(variableMatch as RegExpMatch).group(1)}=((?:0x)?([0-9a-fA-F]+))',
-      );
-      Match? match = regex.firstMatch(scriptText);
 
-      if (match != null) {
-        String value = match.group(1);
-        if (value.contains("0x")) {
-          indexes.add(int.parse(substringAfter(value, "0x"), radix: 16));
-        } else {
-          indexes.add(int.parse(value));
+    if (serverType == 0) {
+      final res = (await client.get(
+          Uri.parse(
+            "https://raw.githubusercontent.com/superbillgalaxy/megacloud-keys/refs/heads/main/api.json",
+          ),
+        )).body;
+      final data = jsonDecode(res);
+      final key = data["megacloud"] as String;
+      if (key.contains("0x")) {
+        indexes.add(int.parse(substringAfter(key, "0x"), radix: 16));
+      } else {
+        indexes.add(int.parse(key));
+      }
+    } else {
+      var switchCode = "";
+      final scriptText = (await client.get(
+        Uri.parse("https://rapid-cloud.co/js/player/prod/e6-player-v2.min.js"),
+      )).body;
+      switchCode = scriptText.substring(
+        scriptText.lastIndexOf('switch'),
+        scriptText.indexOf('=partKey'),
+      );
+
+      for (var variableMatch in RegExp(
+        r'=(\w+)',
+      ).allMatches(switchCode).toList()) {
+        final regex = RegExp(
+          ',${(variableMatch as RegExpMatch).group(1)}=((?:0x)?([0-9a-fA-F]+))',
+        );
+        Match? match = regex.firstMatch(scriptText);
+
+        if (match != null) {
+          String value = match.group(1);
+          if (value.contains("0x")) {
+            indexes.add(int.parse(substringAfter(value, "0x"), radix: 16));
+          } else {
+            indexes.add(int.parse(value));
+          }
         }
       }
     }
@@ -1314,7 +1336,7 @@ const getSrcStr = """"use strict";
 // solution inspired from https://github.com/drblgn/rabbit_wasm/blob/main/rabbit.ts
 // solution inspired from https://github.com/shimizudev/consumet.ts/blob/master/dist/extractors/megacloud/megacloud.getsrcs.js
 
-const embed_url = 'https://megacloud.tv/embed-2/e-1/';
+const embed_url = 'https://megacloud.tv/embed-2/v2/e-1/';
 const referrer = 'https://hianime.to';
 const user_agent = navigator.userAgent;
 let wasm;
@@ -1343,7 +1365,7 @@ const image_data = {
     data: window.decoded_png,
 };
 const canvas = {
-    baseUrl: 'https://megacloud.tv/embed-2/e-1/1hnXq7VzX0Ex?k=1',
+    baseUrl: 'https://megacloud.tv/embed-2/v2/e-1/1hnXq7VzX0Ex?k=1',
     width: 0,
     height: 0,
     style: {
@@ -1370,7 +1392,7 @@ const fake_window = {
     },
     origin: 'https://megacloud.tv',
     location: {
-        href: 'https://megacloud.tv/embed-2/e-1/1hnXq7VzX0Ex?k=1',
+        href: 'https://megacloud.tv/embed-2/v2/e-1/1hnXq7VzX0Ex?k=1',
         origin: 'https://megacloud.tv',
     },
     performance: {
@@ -1988,7 +2010,7 @@ async function getSources(xrax) {
     let res = {};
     try {
         await V();
-        let getSourcesUrl = 'https://megacloud.tv/embed-2/ajax/e-1/getSources?id=' +
+        let getSourcesUrl = 'https://megacloud.tv/embed-2/v2/ajax/e-1/getSources?id=' +
             fake_window.pid +
             '&v=' +
             fake_window.localStorage.kversion +
